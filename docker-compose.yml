@@ -1,0 +1,50 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: sen_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  server:
+    build:
+      context: ./server
+    container_name: sen_server
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      MONGODB_URI: mongodb://mongodb:27017/smart_event_nepal
+      JWT_SECRET: change_this_super_secret_access_key
+      JWT_REFRESH_SECRET: change_this_super_secret_refresh_key
+      CLIENT_URL: http://localhost:5173
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  client:
+    build:
+      context: ./client
+    container_name: sen_client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+      VITE_SOCKET_URL: http://localhost:5000
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+
+volumes:
+  mongo_data:

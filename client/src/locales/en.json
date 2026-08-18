@@ -1,0 +1,5 @@
+{
+  "nav": { "events": "Events", "forYou": "For You", "about": "About", "login": "Log in", "signup": "Sign up" },
+  "home": { "title": "Discover events made for you", "subtitle": "AI-powered recommendations across Nepal" },
+  "common": { "loading": "Loading...", "search": "Search", "filters": "Filters" }
+}
