@@ -1,46 +1,253 @@
+// import { Router } from 'express';
+// import { z } from 'zod';
+// import { validateBody } from '../middleware/validate.js';
+// import { requireAuth, requireRole, optionalAuth } from '../middleware/auth.js';
+// import * as ctrl from '../controllers/eventController.js';
+
+// const router = Router();
+
+// const ticketTypeSchema = z.object({
+//   name: z.string().min(1), price: z.number().min(0), capacity: z.number().min(0),
+//   saleStart: z.coerce.date().optional(), saleEnd: z.coerce.date().optional(),
+// });
+
+// const eventSchema = z.object({
+//   title: z.string().min(3), description: z.string().min(10),
+//   category: z.string().min(1), tags: z.array(z.string()).optional().default([]),
+//   eventType: z.enum(['Birthday Party', 'College Event', 'Workshop', 'Seminar', 'Hackathon', 'Conference', 'Concert', 'Sports', 'Corporate Event', 'Community Event', 'Festival', 'Other']),
+//   image: z.string().optional().default(''),
+//   city: z.string().min(1), venue: z.string().min(1),
+//   location: z.object({ lat: z.number().optional(), lng: z.number().optional() }).optional(),
+//   date: z.coerce.date(), startTime: z.string(), endTime: z.string(),
+//   capacity: z.number().min(1), ticketTypes: z.array(ticketTypeSchema).min(1),
+//   registrationStart: z.coerce.date(), registrationEnd: z.coerce.date(),
+//   language: z.enum(['English', 'Nepali', 'Both']).optional(),
+//   visibility: z.enum(['public', 'private']).optional(),
+// });
+
+// router.get('/', optionalAuth, ctrl.listEvents);
+// router.get('/mine', requireAuth, requireRole('organizer', 'admin'), ctrl.myEvents);
+// router.get('/:id', optionalAuth, ctrl.getEvent);
+// router.post('/', requireAuth, requireRole('organizer', 'admin'), validateBody(eventSchema), ctrl.createEvent);
+// router.put('/:id', requireAuth, requireRole('organizer', 'admin'), ctrl.updateEvent);
+// router.delete('/:id', requireAuth, requireRole('organizer', 'admin'), ctrl.deleteEvent);
+// // Organizers publish directly - no admin approval required (see controller
+// // comment). submit/moderate are kept as optional admin-oversight tools an
+// // organizer or admin can still use if a team wants a review step, but they
+// // are no longer the only path to PUBLISHED.
+// router.post('/:id/publish', requireAuth, requireRole('organizer', 'admin'), ctrl.publishEvent);
+// router.post('/:id/submit', requireAuth, requireRole('organizer'), ctrl.submitForApproval);
+// router.post('/:id/moderate', requireAuth, requireRole('admin'), ctrl.moderateEvent);
+// router.post('/:id/complete', requireAuth, requireRole('organizer', 'admin'), ctrl.completeEvent);
+// router.post('/:id/cancel', requireAuth, requireRole('organizer', 'admin'), ctrl.cancelEvent);
+// router.post('/:id/favorite', requireAuth, ctrl.toggleFavorite);
+// router.post('/interactions', requireAuth, ctrl.trackInteraction);
+
+// export default router;
 import { Router } from 'express';
 import { z } from 'zod';
+
 import { validateBody } from '../middleware/validate.js';
 import { requireAuth, requireRole, optionalAuth } from '../middleware/auth.js';
+import upload from '../middleware/upload.js';
+
 import * as ctrl from '../controllers/eventController.js';
 
 const router = Router();
 
 const ticketTypeSchema = z.object({
-  name: z.string().min(1), price: z.number().min(0), capacity: z.number().min(0),
-  saleStart: z.coerce.date().optional(), saleEnd: z.coerce.date().optional(),
+  name: z.string().min(1),
+  price: z.number().min(0),
+  capacity: z.number().min(0),
+  saleStart: z.coerce.date().optional(),
+  saleEnd: z.coerce.date().optional(),
 });
 
 const eventSchema = z.object({
-  title: z.string().min(3), description: z.string().min(10),
-  category: z.string().min(1), tags: z.array(z.string()).optional().default([]),
-  eventType: z.enum(['Birthday Party', 'College Event', 'Workshop', 'Seminar', 'Hackathon', 'Conference', 'Concert', 'Sports', 'Corporate Event', 'Community Event', 'Festival', 'Other']),
+  title: z.string().min(3),
+  description: z.string().min(10),
+
+  category: z.string().min(1),
+
+  tags: z.array(z.string()).optional().default([]),
+
+  eventType: z.enum([
+    'Birthday Party',
+    'College Event',
+    'Workshop',
+    'Seminar',
+    'Hackathon',
+    'Conference',
+    'Concert',
+    'Sports',
+    'Corporate Event',
+    'Community Event',
+    'Festival',
+    'Other',
+  ]),
+
   image: z.string().optional().default(''),
-  city: z.string().min(1), venue: z.string().min(1),
-  location: z.object({ lat: z.number().optional(), lng: z.number().optional() }).optional(),
-  date: z.coerce.date(), startTime: z.string(), endTime: z.string(),
-  capacity: z.number().min(1), ticketTypes: z.array(ticketTypeSchema).min(1),
-  registrationStart: z.coerce.date(), registrationEnd: z.coerce.date(),
-  language: z.enum(['English', 'Nepali', 'Both']).optional(),
-  visibility: z.enum(['public', 'private']).optional(),
+
+  city: z.string().min(1),
+
+  venue: z.string().min(1),
+
+  location: z
+    .object({
+      lat: z.number().optional(),
+      lng: z.number().optional(),
+    })
+    .optional(),
+
+  date: z.coerce.date(),
+
+  startTime: z.string(),
+
+  endTime: z.string(),
+
+  capacity: z.number().min(1),
+
+  ticketTypes: z.array(ticketTypeSchema).min(1),
+
+  registrationStart: z.coerce.date(),
+
+  registrationEnd: z.coerce.date(),
+
+  language: z
+    .enum(['English', 'Nepali', 'Both'])
+    .optional(),
+
+  visibility: z
+    .enum(['public', 'private'])
+    .optional(),
 });
 
-router.get('/', optionalAuth, ctrl.listEvents);
-router.get('/mine', requireAuth, requireRole('organizer', 'admin'), ctrl.myEvents);
-router.get('/:id', optionalAuth, ctrl.getEvent);
-router.post('/', requireAuth, requireRole('organizer', 'admin'), validateBody(eventSchema), ctrl.createEvent);
-router.put('/:id', requireAuth, requireRole('organizer', 'admin'), ctrl.updateEvent);
-router.delete('/:id', requireAuth, requireRole('organizer', 'admin'), ctrl.deleteEvent);
-// Organizers publish directly - no admin approval required (see controller
-// comment). submit/moderate are kept as optional admin-oversight tools an
-// organizer or admin can still use if a team wants a review step, but they
-// are no longer the only path to PUBLISHED.
-router.post('/:id/publish', requireAuth, requireRole('organizer', 'admin'), ctrl.publishEvent);
-router.post('/:id/submit', requireAuth, requireRole('organizer'), ctrl.submitForApproval);
-router.post('/:id/moderate', requireAuth, requireRole('admin'), ctrl.moderateEvent);
-router.post('/:id/complete', requireAuth, requireRole('organizer', 'admin'), ctrl.completeEvent);
-router.post('/:id/cancel', requireAuth, requireRole('organizer', 'admin'), ctrl.cancelEvent);
-router.post('/:id/favorite', requireAuth, ctrl.toggleFavorite);
-router.post('/interactions', requireAuth, ctrl.trackInteraction);
+// ---------------------------------------------------------
+// PUBLIC EVENT ROUTES
+// ---------------------------------------------------------
+
+router.get(
+  '/',
+  optionalAuth,
+  ctrl.listEvents
+);
+
+router.get(
+  '/mine',
+  requireAuth,
+  requireRole('organizer', 'admin'),
+  ctrl.myEvents
+);
+
+router.get(
+  '/:id',
+  optionalAuth,
+  ctrl.getEvent
+);
+
+// ---------------------------------------------------------
+// CREATE EVENT
+// ---------------------------------------------------------
+
+router.post(
+  '/',
+  requireAuth,
+  requireRole('organizer', 'admin'),
+
+  // Accept image upload
+  upload.single('image'),
+
+  // Validate remaining form fields
+  ctrl.validateCreateEvent,
+
+  ctrl.createEvent
+);
+
+// ---------------------------------------------------------
+// UPDATE EVENT
+// ---------------------------------------------------------
+
+router.put(
+  '/:id',
+  requireAuth,
+  requireRole('organizer', 'admin'),
+
+  // Image is optional when editing
+  upload.single('image'),
+
+  ctrl.validateUpdateEvent,
+
+  ctrl.updateEvent
+);
+
+// ---------------------------------------------------------
+// DELETE EVENT
+// ---------------------------------------------------------
+
+router.delete(
+  '/:id',
+  requireAuth,
+  requireRole('organizer', 'admin'),
+  ctrl.deleteEvent
+);
+
+// ---------------------------------------------------------
+// PUBLISH / APPROVAL
+// ---------------------------------------------------------
+
+router.post(
+  '/:id/publish',
+  requireAuth,
+  requireRole('organizer', 'admin'),
+  ctrl.publishEvent
+);
+
+router.post(
+  '/:id/submit',
+  requireAuth,
+  requireRole('organizer'),
+  ctrl.submitForApproval
+);
+
+router.post(
+  '/:id/moderate',
+  requireAuth,
+  requireRole('admin'),
+  ctrl.moderateEvent
+);
+
+// ---------------------------------------------------------
+// EVENT STATUS
+// ---------------------------------------------------------
+
+router.post(
+  '/:id/complete',
+  requireAuth,
+  requireRole('organizer', 'admin'),
+  ctrl.completeEvent
+);
+
+router.post(
+  '/:id/cancel',
+  requireAuth,
+  requireRole('organizer', 'admin'),
+  ctrl.cancelEvent
+);
+
+// ---------------------------------------------------------
+// FAVORITES / INTERACTIONS
+// ---------------------------------------------------------
+
+router.post(
+  '/:id/favorite',
+  requireAuth,
+  ctrl.toggleFavorite
+);
+
+router.post(
+  '/interactions',
+  requireAuth,
+  ctrl.trackInteraction
+);
 
 export default router;
