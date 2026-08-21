@@ -37,11 +37,13 @@ async function start() {
   await connectDB();
   // Train the attendance-prediction Random Forest once at boot on the
   // seeded synthetic dataset, so predictions are available immediately.
-  try { trainModel(); } catch (e) { console.error('[ml] initial training failed:', e.message); }
+  try { trainModel(); } catch (e) { 
+    console.error('[ml] initial training failed:', e.message);
+   }
 
   server.listen(PORT, () => {
-    console.log(`\n  SmartEvent Nepal API listening on http://localhost:${PORT}`);
-    console.log(`  Health check: http://localhost:${PORT}/api/health\n`);
+    // console.log(`\n  SmartEvent Nepal API listening on http://localhost:${PORT}`);
+    // console.log(`  Health check: http://localhost:${PORT}/api/health\n`);
   });
 }
 

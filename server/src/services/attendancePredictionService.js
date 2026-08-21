@@ -89,7 +89,7 @@ export function trainModel({ nSamples = 4000, nTrees = 30 } = {}) {
   model.fit(trainRows, trainLabels);
   lastMetrics = evaluateClassifier(model, testRows, testLabels);
   trainedAt = new Date();
-  console.log('[ml] Attendance RandomForest trained on synthetic data. Test metrics:', lastMetrics);
+  // console.log('[ml] Attendance RandomForest trained on synthetic data. Test metrics:', lastMetrics);
   return { metrics: lastMetrics, trainedAt };
 }
 
