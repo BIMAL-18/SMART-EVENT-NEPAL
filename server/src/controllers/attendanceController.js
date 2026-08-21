@@ -7,6 +7,9 @@ import { logAction } from '../services/auditService.js';
 
 // Organizer scans a QR ticket at the venue. Validates: ticket exists,
 // belongs to this event, is confirmed, and is not already checked in.
+// On success, the registration's status moves CONFIRMED -> ATTENDED (in
+// addition to the checkedIn/checkedInAt fields), so "attended" is a
+// first-class, queryable status rather than only an implicit boolean.
 export async function checkIn(req, res, next) {
   try {
     const { qrPayload, eventId } = req.body;
@@ -21,7 +24,7 @@ export async function checkIn(req, res, next) {
     if (String(registration.event.organizer) !== String(req.user._id) && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorised to check in for this event' });
     }
-    if (registration.status !== 'CONFIRMED') {
+    if (!['CONFIRMED', 'ATTENDED'].includes(registration.status)) {
       return res.status(400).json({ message: 'Registration is not confirmed', valid: false });
     }
     if (registration.checkedIn) {
@@ -30,12 +33,13 @@ export async function checkIn(req, res, next) {
 
     registration.checkedIn = true;
     registration.checkedInAt = new Date();
+    registration.status = 'ATTENDED';
     await registration.save();
 
     await Interaction.create({ user: registration.user, event: registration.event._id, type: 'ATTEND', weight: 7 });
     await logAction({ actor: req.user._id, actorRole: req.user.role, action: 'CHECK_IN', targetType: 'Registration', targetId: registration._id });
 
-    const totalConfirmed = await Registration.countDocuments({ event: eventId, status: 'CONFIRMED' });
+    const totalConfirmed = await Registration.countDocuments({ event: eventId, status: { $in: ['CONFIRMED', 'ATTENDED'] } });
     const totalCheckedIn = await Registration.countDocuments({ event: eventId, checkedIn: true });
     emitToEventRoom(eventId, 'attendance.checkedIn', { registrationId: registration._id, totalConfirmed, totalCheckedIn });
 
@@ -47,7 +51,7 @@ export async function eventAttendanceSummary(req, res, next) {
   try {
     const event = await Event.findById(req.params.eventId);
     if (!event) return res.status(404).json({ message: 'Event not found' });
-    const confirmed = await Registration.find({ event: event._id, status: 'CONFIRMED' });
+    const confirmed = await Registration.find({ event: event._id, status: { $in: ['CONFIRMED', 'ATTENDED'] } });
     const checkedIn = confirmed.filter(r => r.checkedIn).length;
     res.json({
       registered: confirmed.length,

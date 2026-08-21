@@ -31,8 +31,14 @@ router.get('/:id', optionalAuth, ctrl.getEvent);
 router.post('/', requireAuth, requireRole('organizer', 'admin'), validateBody(eventSchema), ctrl.createEvent);
 router.put('/:id', requireAuth, requireRole('organizer', 'admin'), ctrl.updateEvent);
 router.delete('/:id', requireAuth, requireRole('organizer', 'admin'), ctrl.deleteEvent);
+// Organizers publish directly - no admin approval required (see controller
+// comment). submit/moderate are kept as optional admin-oversight tools an
+// organizer or admin can still use if a team wants a review step, but they
+// are no longer the only path to PUBLISHED.
+router.post('/:id/publish', requireAuth, requireRole('organizer', 'admin'), ctrl.publishEvent);
 router.post('/:id/submit', requireAuth, requireRole('organizer'), ctrl.submitForApproval);
 router.post('/:id/moderate', requireAuth, requireRole('admin'), ctrl.moderateEvent);
+router.post('/:id/complete', requireAuth, requireRole('organizer', 'admin'), ctrl.completeEvent);
 router.post('/:id/cancel', requireAuth, requireRole('organizer', 'admin'), ctrl.cancelEvent);
 router.post('/:id/favorite', requireAuth, ctrl.toggleFavorite);
 router.post('/interactions', requireAuth, ctrl.trackInteraction);

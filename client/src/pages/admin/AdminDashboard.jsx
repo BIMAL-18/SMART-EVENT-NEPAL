@@ -1,10 +1,19 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, BarChart, Bar } from 'recharts';
-import { Users, Building2, CalendarCheck, Wallet } from 'lucide-react';
+import { Users, Building2, CalendarCheck, Wallet, ClipboardList, CreditCard, ScrollText, UserCog } from 'lucide-react';
 import { api } from '../../api/client.js';
 import Loading from '../../components/Loading.jsx';
 import { getAttendanceModelInfo } from './helpers.js';
+
+const quickLinks = [
+  { to: '/admin/users', label: 'All Users', icon: UserCog },
+  { to: '/admin/events', label: 'All Events', icon: CalendarCheck },
+  { to: '/admin/registrations', label: 'All Registrations', icon: ClipboardList },
+  { to: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { to: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
+];
 
 export default function AdminDashboard() {
   const { data, isLoading } = useQuery({ queryKey: ['admin-analytics'], queryFn: () => api.get('/admin/analytics').then(r => r.data) });
@@ -23,6 +32,14 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+
+      <div className="flex flex-wrap gap-2">
+        {quickLinks.map(l => (
+          <Link key={l.to} to={l.to} className="btn-secondary text-sm flex items-center gap-2">
+            <l.icon size={14} /> {l.label}
+          </Link>
+        ))}
+      </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map(s => (

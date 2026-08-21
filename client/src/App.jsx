@@ -33,6 +33,7 @@ import AdminUsers from './pages/admin/AdminUsers.jsx';
 import AdminEvents from './pages/admin/AdminEvents.jsx';
 import AdminPayments from './pages/admin/AdminPayments.jsx';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs.jsx';
+import AdminRegistrations from './pages/admin/AdminRegistrations.jsx';
 
 import CertificateVerify from './pages/CertificateVerify.jsx';
 import NotFound from './pages/NotFound.jsx';
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="/admin/organizers" element={<ProtectedRoute roles={['admin']}><AdminUsers roleFilter="organizer" /></ProtectedRoute>} />
           <Route path="/admin/events" element={<ProtectedRoute roles={['admin']}><AdminEvents /></ProtectedRoute>} />
           <Route path="/admin/categories" element={<ProtectedRoute roles={['admin']}><AdminEvents /></ProtectedRoute>} />
+          <Route path="/admin/registrations" element={<ProtectedRoute roles={['admin']}><AdminRegistrations /></ProtectedRoute>} />
           <Route path="/admin/payments" element={<ProtectedRoute roles={['admin']}><AdminPayments /></ProtectedRoute>} />
           <Route path="/admin/audit-logs" element={<ProtectedRoute roles={['admin']}><AdminAuditLogs /></ProtectedRoute>} />
 

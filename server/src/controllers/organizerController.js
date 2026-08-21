@@ -8,19 +8,19 @@ export async function organizerDashboard(req, res, next) {
     const eventIds = events.map(e => e._id);
 
     const [totalRegistrations, revenueAgg, checkedInCount] = await Promise.all([
-      Registration.countDocuments({ event: { $in: eventIds }, status: 'CONFIRMED' }),
+      Registration.countDocuments({ event: { $in: eventIds }, status: { $in: ['CONFIRMED', 'ATTENDED'] } }),
       Payment.aggregate([{ $match: { event: { $in: eventIds }, status: 'PAID' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
       Registration.countDocuments({ event: { $in: eventIds }, checkedIn: true }),
     ]);
 
     const registrationsOverTime = await Registration.aggregate([
-      { $match: { event: { $in: eventIds }, status: 'CONFIRMED' } },
+      { $match: { event: { $in: eventIds }, status: { $in: ['CONFIRMED', 'ATTENDED'] } } },
       { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]);
 
     const ticketTypeDistribution = await Registration.aggregate([
-      { $match: { event: { $in: eventIds }, status: 'CONFIRMED' } },
+      { $match: { event: { $in: eventIds }, status: { $in: ['CONFIRMED', 'ATTENDED'] } } },
       { $group: { _id: '$ticketTypeName', count: { $sum: '$quantity' } } },
     ]);
 
@@ -44,7 +44,7 @@ export async function eventAnalytics(req, res, next) {
     if (String(event.organizer) !== String(req.user._id) && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not your event' });
     }
-    const registrations = await Registration.find({ event: event._id, status: 'CONFIRMED' });
+    const registrations = await Registration.find({ event: event._id, status: { $in: ['CONFIRMED', 'ATTENDED'] } });
     const revenueAgg = await Payment.aggregate([{ $match: { event: event._id, status: 'PAID' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
     const checkedIn = registrations.filter(r => r.checkedIn).length;
 

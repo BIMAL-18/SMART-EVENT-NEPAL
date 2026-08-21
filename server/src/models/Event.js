@@ -1,11 +1,5 @@
 import mongoose from 'mongoose';
 
-/*
-|--------------------------------------------------------------------------
-| Ticket Type Schema
-|--------------------------------------------------------------------------
-*/
-
 const ticketTypeSchema = new mongoose.Schema(
   {
     name: {
@@ -18,14 +12,12 @@ const ticketTypeSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
-      default: 0,
     },
 
     capacity: {
       type: Number,
       required: true,
       min: 0,
-      default: 0,
     },
 
     sold: {
@@ -47,13 +39,6 @@ const ticketTypeSchema = new mongoose.Schema(
   }
 );
 
-
-/*
-|--------------------------------------------------------------------------
-| Event Schema
-|--------------------------------------------------------------------------
-*/
-
 const eventSchema = new mongoose.Schema(
   {
     title: {
@@ -65,7 +50,6 @@ const eventSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true,
-      trim: true,
     },
 
     organizer: {
@@ -78,14 +62,12 @@ const eventSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      trim: true,
       index: true,
     },
 
     tags: [
       {
         type: String,
-        trim: true,
         index: true,
       },
     ],
@@ -118,24 +100,17 @@ const eventSchema = new mongoose.Schema(
     city: {
       type: String,
       required: true,
-      trim: true,
       index: true,
     },
 
     venue: {
       type: String,
       required: true,
-      trim: true,
     },
 
     location: {
-      lat: {
-        type: Number,
-      },
-
-      lng: {
-        type: Number,
-      },
+      lat: Number,
+      lng: Number,
     },
 
     date: {
@@ -160,12 +135,7 @@ const eventSchema = new mongoose.Schema(
       min: 1,
     },
 
-    /*
-    |--------------------------------------------------------------------------
-    | Ticket Types
-    |--------------------------------------------------------------------------
-    */
-
+    // Ticket types
     ticketTypes: {
       type: [ticketTypeSchema],
       default: [],
@@ -181,35 +151,17 @@ const eventSchema = new mongoose.Schema(
       required: true,
     },
 
-    /*
-    |--------------------------------------------------------------------------
-    | Language
-    |--------------------------------------------------------------------------
-    */
-
     language: {
       type: String,
       enum: ['English', 'Nepali', 'Both'],
       default: 'English',
     },
 
-    /*
-    |--------------------------------------------------------------------------
-    | Visibility
-    |--------------------------------------------------------------------------
-    */
-
     visibility: {
       type: String,
       enum: ['public', 'private'],
       default: 'public',
     },
-
-    /*
-    |--------------------------------------------------------------------------
-    | Status
-    |--------------------------------------------------------------------------
-    */
 
     status: {
       type: String,
@@ -224,43 +176,30 @@ const eventSchema = new mongoose.Schema(
       index: true,
     },
 
-    /*
-    |--------------------------------------------------------------------------
-    | Statistics
-    |--------------------------------------------------------------------------
-    */
-
     viewCount: {
       type: Number,
       default: 0,
-      min: 0,
     },
 
     avgRating: {
       type: Number,
       default: 0,
-      min: 0,
-      max: 5,
     },
 
     ratingCount: {
       type: Number,
       default: 0,
-      min: 0,
     },
   },
-
   {
     timestamps: true,
   }
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| Indexes
-|--------------------------------------------------------------------------
-*/
+// ---------------------------------------------------------
+// INDEXES
+// ---------------------------------------------------------
 
 eventSchema.index({
   status: 1,
@@ -273,76 +212,40 @@ eventSchema.index({
   eventType: 1,
 });
 
-
-/*
-|--------------------------------------------------------------------------
-| Text Search Index
-|--------------------------------------------------------------------------
-*/
-
-eventSchema.index(
-  {
-    title: 'text',
-    description: 'text',
-    tags: 'text',
-  },
-  {
-    default_language: 'english',
-    language_override: 'textLanguage',
-  }
-);
+eventSchema.index({
+  title: 'text',
+  description: 'text',
+  tags: 'text',
+});
 
 
-/*
-|--------------------------------------------------------------------------
-| Virtual: totalRegistered
-|--------------------------------------------------------------------------
-|
-| IMPORTANT:
-|
-| Old MongoDB records may not contain ticketTypes.
-|
-| Therefore we safely handle:
-|
-| undefined
-| null
-| empty array
-|
-|--------------------------------------------------------------------------
-*/
+// ---------------------------------------------------------
+// VIRTUAL: TOTAL REGISTERED
+// ---------------------------------------------------------
 
 eventSchema.virtual('totalRegistered').get(function () {
   const tickets = Array.isArray(this.ticketTypes)
     ? this.ticketTypes
     : [];
 
-  return tickets.reduce((sum, ticket) => {
-    return sum + Number(ticket?.sold || 0);
-  }, 0);
+  return tickets.reduce(
+    (sum, ticket) => sum + (Number(ticket.sold) || 0),
+    0
+  );
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| Return virtuals in JSON
-|--------------------------------------------------------------------------
-*/
+// ---------------------------------------------------------
+// JSON SETTINGS
+// ---------------------------------------------------------
 
 eventSchema.set('toJSON', {
   virtuals: true,
 });
 
-eventSchema.set('toObject', {
-  virtuals: true,
-});
 
+// ---------------------------------------------------------
+// EXPORT
+// ---------------------------------------------------------
 
-/*
-|--------------------------------------------------------------------------
-| Model
-|--------------------------------------------------------------------------
-*/
-
-const Event = mongoose.model('Event', eventSchema);
-
-export default Event;
+export default mongoose.model('Event', eventSchema);

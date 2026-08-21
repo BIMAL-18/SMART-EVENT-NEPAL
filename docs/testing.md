@@ -24,10 +24,24 @@ project (see below).
 - `tests/integration/auth.test.js` — registration, duplicate-email
   rejection, forced non-admin role on signup, login success/failure,
   protected-route 401 without a token.
-- `tests/integration/rbacAndEvents.test.js` — attendees cannot create
-  events, organizers can (as DRAFT), only admins can approve/reject, and a
-  full capacity/overbooking test: a 1-capacity ticket type accepts exactly
-  one registration and rejects the second with 409.
+- `tests/integration/rbacAndEvents.test.js`:
+  - attendees cannot create events; organizers can (as DRAFT)
+  - an organizer can **publish their own event directly with no admin
+    approval** (`POST /events/:id/publish`), and cannot publish someone
+    else's event
+  - the optional admin `moderate` (approve/reject) path still correctly
+    rejects non-admins
+  - admin can list every event platform-wide regardless of status or
+    visibility, including another organizer's private event
+  - a **private event is excluded from public search results** but is
+    still viewable directly by its event ID/link
+  - capacity/overbooking: a 1-capacity ticket type accepts exactly one
+    registration and rejects the second with 409
+  - **check-in status transition**: scanning a valid QR ticket moves the
+    registration's `status` from `CONFIRMED` to `ATTENDED`; a second scan
+    of the same ticket is rejected as a duplicate (409); completing the
+    event afterwards **auto-issues a certificate** to the checked-in
+    attendee, verified by then fetching `/certificates/mine`
 
 **Note on this repository's build environment:** `mongodb-memory-server`
 downloads a real `mongod` binary the first time it runs. In the sandbox

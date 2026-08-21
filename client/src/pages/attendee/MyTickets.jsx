@@ -9,7 +9,7 @@ import EmptyState from '../../components/EmptyState.jsx';
 export default function MyTickets() {
   const { data, isLoading } = useQuery({ queryKey: ['my-registrations'], queryFn: () => api.get('/registrations/mine').then(r => r.data) });
   if (isLoading) return <Loading />;
-  const tickets = (data?.registrations || []).filter(r => r.status === 'CONFIRMED' && r.ticketId);
+  const tickets = (data?.registrations || []).filter(r => ['CONFIRMED', 'ATTENDED'].includes(r.status) && r.ticketId);
 
   return (
     <div className="space-y-6">

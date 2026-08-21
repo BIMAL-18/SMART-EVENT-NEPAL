@@ -251,3 +251,51 @@ Random Forest trained on a clearly-separable synthetic pattern reaches
 >85% test accuracy; a high-engagement synthetic attendee profile always
 scores a higher attendance probability than a low-engagement one. These are
 deterministic properties a random-number generator could not satisfy.
+
+## Event workflow & lifecycle
+
+**42. Does an organizer need admin approval to publish an event?**
+No. `POST /api/events/:id/publish` lets an organizer take their own event
+straight from DRAFT (or PENDING_APPROVAL) to PUBLISHED. The optional
+`submit`/`moderate` admin-review pair still exists in the codebase for a
+team that wants a review step, but it's not required — admins retain full
+visibility and override power (they can still cancel or suspend anything)
+without being a mandatory gate to going live.
+
+**43. How are private events (e.g. a birthday party) different from public
+ones?**
+A private event is excluded from `/api/events` search/browse results (the
+listEvents query filters them out for anyone except their own organizer or
+an admin), but `GET /api/events/:id` still works for anyone who has the
+direct link — the same pattern as an "unlisted" video. It still goes
+through registration, payment, QR ticketing, and check-in exactly like a
+public event.
+
+**44. What can the admin see that an organizer cannot?**
+Everything, platform-wide: `GET /api/admin/events` lists every event
+regardless of status or visibility (including other organizers' private/
+draft events), `GET /api/admin/registrations` lists every registration
+across every organizer, and `/api/admin/payments` / `/api/admin/audit-logs`
+/ `/api/admin/analytics` give platform-wide financial and activity
+visibility. An organizer's dashboard, by contrast, is always scoped to
+`organizer: req.user._id`.
+
+**45. What exactly happens when a QR ticket is scanned?**
+Beyond the boolean `checkedIn`/`checkedInAt` fields, the registration's
+`status` field itself transitions from `CONFIRMED` to `ATTENDED` — a
+first-class, queryable status rather than an implicit flag. This has two
+practical consequences enforced in code: an ATTENDED registration can no
+longer be cancelled (`cancelRegistration` explicitly blocks it), and every
+dashboard/analytics query that used to filter on `status: 'CONFIRMED'` was
+updated to match `{$in: ['CONFIRMED', 'ATTENDED']}` so attended tickets
+still count as valid registrations everywhere they should.
+
+**46. How does certificate issuance work after an event ends?**
+An organizer or admin calls `POST /api/events/:id/complete`
+(PUBLISHED → COMPLETED). That single call triggers
+`issueCertificatesForCompletedEvent()`, which finds every registration for
+that event with `checkedIn: true` and generates a certificate + sends a
+notification for each one automatically, in bulk. The manual
+`POST /api/certificates/issue` endpoint still exists for an attendee to
+re-fetch their own certificate record, but it's no longer the primary path
+— nobody has to remember to request one.

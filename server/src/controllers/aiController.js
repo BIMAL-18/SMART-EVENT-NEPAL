@@ -40,7 +40,7 @@ export async function predictEventAttendance(req, res, next) {
     if (String(event.organizer) !== String(req.user._id) && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not your event' });
     }
-    const registrations = await Registration.find({ event: event._id, status: 'CONFIRMED' });
+    const registrations = await Registration.find({ event: event._id, status: { $in: ['CONFIRMED', 'ATTENDED'] } });
 
     // Build per-user historical attendance stats from Interaction history
     const userIds = [...new Set(registrations.map(r => r.user.toString()))];

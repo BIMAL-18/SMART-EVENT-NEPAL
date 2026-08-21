@@ -18,10 +18,11 @@ attendees, organizers, and administrators.
 
 - **Auth**: JWT access + refresh tokens, bcrypt password hashing, RBAC
   (attendee / organizer / admin), forgot/reset password, profile editing
-- **Events**: full CRUD, DRAFT → PENDING_APPROVAL → PUBLISHED workflow,
-  admin moderation, cancellation, multiple ticket types per event
-  (Early Bird / Student / Regular / VIP), capacity enforcement,
-  public and private (e.g. birthday party) visibility
+- **Events**: full CRUD, organizers **publish their own events directly —
+  no admin approval required**, cancellation, multiple ticket types per
+  event (Early Bird / Student / Regular / VIP), capacity enforcement,
+  public and private visibility (private events, e.g. a birthday party,
+  never show up in public search but are viewable via direct link)
 - **Search**: keyword + category/city/type/language/price/date filters,
   multiple sort orders, MongoDB text + compound indexes
 - **AI recommendations**: real hybrid content-based (cosine similarity) +
@@ -34,16 +35,22 @@ attendees, organizers, and administrators.
 - **Payments**: pluggable provider architecture (eSewa / Khalti / Demo),
   automatically falls back to a working Demo provider when real credentials
   are absent, server-side payment verification only
-- **QR ticketing**: HMAC-signed QR payloads, camera-based scanning with a
-  manual-entry fallback, duplicate check-in prevention, live Socket.IO
-  dashboard updates
-- **Certificates**: PDF generation for eligible (checked-in) attendees of
+- **QR ticketing & check-in**: HMAC-signed QR payloads, camera-based
+  scanning with a manual-entry fallback, duplicate check-in prevention.
+  A successful scan moves the registration's status from `CONFIRMED` to
+  `ATTENDED` (a first-class status, not just a boolean flag) and pushes a
+  live Socket.IO update to the organizer's dashboard
+- **Certificates**: the moment an organizer marks an event `COMPLETED`,
+  every checked-in attendee automatically gets a PDF certificate generated
+  and a notification — no manual per-attendee step required. Certificates
+  are publicly verifiable by code, for eligible (checked-in) attendees of
   completed events, publicly verifiable by code
 - **Notifications**: in-app + email (console-logged in dev mode when SMTP
   isn't configured)
 - **Dashboards**: attendee, organizer (with AI attendance panel and
-  charts), and admin (platform-wide analytics, user/event/payment
-  management, audit log)
+  charts), and admin — platform-wide analytics plus full visibility into
+  **every** user, event (including private/draft ones), registration, and
+  payment on the platform, not just aggregated counts
 - **Security**: helmet, CORS, rate limiting, Zod validation everywhere,
   audit logging — see `docs/security.md`
 

@@ -34,6 +34,24 @@ export async function listAllEvents(req, res, next) {
   } catch (err) { next(err); }
 }
 
+// Admin has full visibility into every registration on the platform,
+// across every organizer's events - not scoped to "my events" the way the
+// organizer dashboard is.
+export async function listAllRegistrations(req, res, next) {
+  try {
+    const { status, eventId } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    if (eventId) filter.event = eventId;
+    const registrations = await Registration.find(filter)
+      .populate('user', 'name email')
+      .populate('event', 'title organizer')
+      .sort({ createdAt: -1 })
+      .limit(1000);
+    res.json({ registrations });
+  } catch (err) { next(err); }
+}
+
 export async function listPayments(req, res, next) {
   try {
     const payments = await Payment.find().populate('user', 'name email').populate('event', 'title').sort({ createdAt: -1 }).limit(500);
@@ -55,7 +73,7 @@ export async function platformAnalytics(req, res, next) {
       User.countDocuments({ role: 'organizer' }),
       Event.countDocuments(),
       Event.countDocuments({ status: 'PUBLISHED' }),
-      Registration.countDocuments({ status: 'CONFIRMED' }),
+      Registration.countDocuments({ status: { $in: ['CONFIRMED', 'ATTENDED'] } }),
       Payment.aggregate([{ $match: { status: 'PAID' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
     ]);
 

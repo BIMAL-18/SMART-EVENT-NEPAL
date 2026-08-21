@@ -8,6 +8,7 @@ import EmptyState from '../../components/EmptyState.jsx';
 
 const statusColors = {
   CONFIRMED: 'bg-emerald-500/15 text-emerald-400',
+  ATTENDED: 'bg-blue-500/15 text-blue-400',
   PENDING_PAYMENT: 'bg-amber-500/15 text-amber-400',
   CANCELLED: 'bg-red-500/15 text-red-400',
 };
@@ -41,10 +42,10 @@ export default function MyRegistrations() {
                 {r.status === 'PENDING_PAYMENT' && (
                   <Link to={`/checkout/${r._id}`} className="btn-primary text-xs py-1.5">Pay now</Link>
                 )}
-                {r.status === 'CONFIRMED' && (
+                {['CONFIRMED', 'ATTENDED'].includes(r.status) && (
                   <Link to={`/my-tickets/${r._id}`} className="btn-secondary text-xs py-1.5">View ticket</Link>
                 )}
-                {r.status !== 'CANCELLED' && (
+                {!['CANCELLED', 'ATTENDED'].includes(r.status) && (
                   <button onClick={() => cancelMutation.mutate(r._id)} className="text-xs text-red-400 hover:underline">Cancel</button>
                 )}
               </div>
